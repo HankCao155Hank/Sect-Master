@@ -1,0 +1,460 @@
+/* 修仙宗门掌门游戏 - 古风主题样式 */
+
+/* 根变量定义 */
+:root {
+  /* 古风配色方案 */
+  --sect-primary: #d97706;      /* 琥珀色 */
+  --sect-secondary: #ea580c;    /* 橙红色 */
+  --sect-accent: #f59e0b;       /* 金黄色 */
+  --sect-success: #059669;      /* 翠绿色 */
+  --sect-warning: #d97706;      /* 警告色 */
+  --sect-danger: #dc2626;       /* 危险色 */
+  --sect-info: #2563eb;         /* 信息色 */
+  
+  /* 背景色 */
+  --sect-bg-primary: #fef3c7;   /* 浅琥珀 */
+  --sect-bg-secondary: #fed7aa; /* 浅橙色 */
+  --sect-bg-accent: #fde68a;    /* 浅黄色 */
+  
+  /* 文字色 */
+  --sect-text-primary: #92400e; /* 深琥珀 */
+  --sect-text-secondary: #a16207; /* 中琥珀 */
+  --sect-text-muted: #78716c;   /* 灰褐色 */
+  
+  /* 边框色 */
+  --sect-border: #fbbf24;       /* 金边框 */
+  --sect-border-light: #fde68a; /* 浅金边框 */
+  
+  /* 阴影 */
+  --sect-shadow: 0 4px 6px -1px rgba(217, 119, 6, 0.1);
+  --sect-shadow-lg: 0 10px 15px -3px rgba(217, 119, 6, 0.1);
+}
+
+/* 全局样式 */
+.sect-container {
+  font-family: 'Noto Serif SC', serif;
+  background: linear-gradient(135deg, var(--sect-bg-primary) 0%, var(--sect-bg-secondary) 100%);
+  min-height: 100vh;
+}
+
+/* 古风标题样式 */
+.sect-title {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 700;
+  color: var(--sect-text-primary);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.sect-title::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--sect-primary), var(--sect-secondary));
+  border-radius: 2px;
+}
+
+/* 古风卡片样式 */
+.sect-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 2px solid var(--sect-border-light);
+  border-radius: 16px;
+  box-shadow: var(--sect-shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.sect-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--sect-primary), var(--sect-secondary), var(--sect-accent));
+}
+
+/* 古风按钮样式 */
+.sect-button {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 500;
+  padding: 12px 24px;
+  border: 2px solid var(--sect-border);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--sect-primary), var(--sect-secondary));
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sect-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.sect-button:hover::before {
+  left: 100%;
+}
+
+.sect-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sect-shadow-lg);
+  border-color: var(--sect-accent);
+}
+
+/* 古风输入框样式 */
+.sect-input {
+  font-family: 'Noto Serif SC', serif;
+  padding: 12px 16px;
+  border: 2px solid var(--sect-border-light);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--sect-text-primary);
+  transition: all 0.3s ease;
+}
+
+.sect-input:focus {
+  outline: none;
+  border-color: var(--sect-primary);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* 古风徽章样式 */
+.sect-badge {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  border: 1px solid;
+}
+
+.sect-badge-primary {
+  background: var(--sect-bg-accent);
+  color: var(--sect-text-primary);
+  border-color: var(--sect-border);
+}
+
+.sect-badge-success {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.sect-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.sect-badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
+/* 古风进度条样式 */
+.sect-progress {
+  height: 8px;
+  background: var(--sect-bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--sect-border-light);
+}
+
+.sect-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--sect-primary), var(--sect-secondary));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.sect-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* 古风分隔线样式 */
+.sect-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sect-border), transparent);
+  margin: 24px 0;
+  position: relative;
+}
+
+.sect-divider::before {
+  content: '❦';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--sect-bg-primary);
+  padding: 0 12px;
+  color: var(--sect-primary);
+  font-size: 1.2rem;
+}
+
+/* 古风列表样式 */
+.sect-list {
+  list-style: none;
+  padding: 0;
+}
+
+.sect-list-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sect-border-light);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.sect-list-item:last-child {
+  border-bottom: none;
+}
+
+.sect-list-item::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--sect-primary);
+  font-weight: bold;
+}
+
+.sect-list-item:hover {
+  background: var(--sect-bg-accent);
+  padding-left: 24px;
+}
+
+/* 古风表格样式 */
+.sect-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--sect-shadow);
+}
+
+.sect-table th {
+  background: linear-gradient(135deg, var(--sect-primary), var(--sect-secondary));
+  color: white;
+  padding: 16px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.sect-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sect-border-light);
+}
+
+.sect-table tr:hover {
+  background: var(--sect-bg-accent);
+}
+
+/* 古风模态框样式 */
+.sect-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.sect-modal-content {
+  background: var(--sect-bg-primary);
+  border: 3px solid var(--sect-border);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--sect-shadow-lg);
+  position: relative;
+}
+
+.sect-modal-content::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg, var(--sect-primary), var(--sect-secondary), var(--sect-accent));
+  border-radius: 20px;
+  z-index: -1;
+}
+
+/* 古风工具提示样式 */
+.sect-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.sect-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--sect-text-primary);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.sect-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  border: 5px solid transparent;
+  border-top-color: var(--sect-text-primary);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sect-tooltip:hover::after,
+.sect-tooltip:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 古风动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sect-animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.sect-animate-fade-in-down {
+  animation: fadeInDown 0.6s ease-out;
+}
+
+.sect-animate-fade-in-left {
+  animation: fadeInLeft 0.6s ease-out;
+}
+
+.sect-animate-fade-in-right {
+  animation: fadeInRight 0.6s ease-out;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .sect-title {
+    font-size: 1.5rem;
+  }
+  
+  .sect-card {
+    margin: 8px;
+    border-radius: 12px;
+  }
+  
+  .sect-button {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+  
+  .sect-modal-content {
+    padding: 24px;
+    margin: 16px;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .sect-container {
+    background: white;
+  }
+  
+  .sect-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  .sect-button {
+    display: none;
+  }
+}
