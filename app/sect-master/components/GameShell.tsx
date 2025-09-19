@@ -17,6 +17,7 @@ import LibraryAndPlaces from './LibraryAndPlaces';
 import RelationshipTree from './RelationshipTree';
 import WorldMiniMap from './WorldMiniMap';
 import AudioControls from './AudioControls';
+import EffectsTest from './EffectsTest';
 
 export default function GameShell() {
   const { 
@@ -47,6 +48,9 @@ export default function GameShell() {
         <div className="lg:w-1/4 p-4 space-y-4">
           {/* 音效控制 */}
           <AudioControls />
+          
+          {/* 特效测试 */}
+          <EffectsTest />
           
           {/* 导航按钮 */}
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-amber-200">

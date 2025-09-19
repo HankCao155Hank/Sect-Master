@@ -20,6 +20,7 @@ export class AudioManager {
 
   private async initializeAudioContext() {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     } catch (error) {
       console.warn('Web Audio API not supported:', error);
@@ -27,8 +28,8 @@ export class AudioManager {
   }
 
   // 生成音效
-  private generateTone(frequency: number, duration: number, type: OscillatorType = 'sine'): AudioBuffer {
-    if (!this.audioContext) return null as any;
+  private generateTone(frequency: number, duration: number, type: OscillatorType = 'sine'): AudioBuffer | null {
+    if (!this.audioContext) return null;
     
     const sampleRate = this.audioContext.sampleRate;
     const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
@@ -66,20 +67,22 @@ export class AudioManager {
     if (this.isMuted || !this.audioContext) return;
 
     try {
-      const buffer = this.generateTone(
-        options.frequency || this.getSoundFrequency(soundType),
-        options.duration || this.getSoundDuration(soundType),
-        options.type || 'sine'
-      );
+    const buffer = this.generateTone(
+      options.frequency || this.getSoundFrequency(soundType),
+      options.duration || this.getSoundDuration(soundType),
+      options.type || 'sine'
+    );
 
-      const source = this.audioContext.createBufferSource();
-      const gainNode = this.audioContext.createGain();
+    if (!buffer) return;
+
+    const source = this.audioContext!.createBufferSource();
+    const gainNode = this.audioContext!.createGain();
       
       source.buffer = buffer;
       gainNode.gain.value = this.volume;
       
       source.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
+      gainNode.connect(this.audioContext!.destination);
       
       source.start();
     } catch (error) {

@@ -17,6 +17,13 @@ export class EffectsManager {
   private initializeEffectsContainer() {
     if (typeof window === 'undefined') return;
     
+    // 检查是否已经存在特效容器
+    const existingContainer = document.getElementById('effects-container');
+    if (existingContainer) {
+      this.effectsContainer = existingContainer;
+      return;
+    }
+    
     this.effectsContainer = document.createElement('div');
     this.effectsContainer.id = 'effects-container';
     this.effectsContainer.style.cssText = `
@@ -89,6 +96,22 @@ export class EffectsManager {
           particle.style.animation = `lightning ${duration}ms ease-out forwards`;
           break;
       }
+
+      // 生成随机位置偏移
+      const randomX1 = (Math.random() - 0.5) * 100;
+      const randomY1 = (Math.random() - 0.5) * 100;
+      const randomX2 = (Math.random() - 0.5) * 200;
+      const randomY2 = (Math.random() - 0.5) * 200;
+      const randomX3 = (Math.random() - 0.5) * 300;
+      const randomY3 = (Math.random() - 0.5) * 300;
+
+      // 设置CSS变量用于动画
+      particle.style.setProperty('--random-x', `${randomX1}px`);
+      particle.style.setProperty('--random-y', `${randomY1}px`);
+      particle.style.setProperty('--random-x2', `${randomX2}px`);
+      particle.style.setProperty('--random-y2', `${randomY2}px`);
+      particle.style.setProperty('--random-x3', `${randomX3}px`);
+      particle.style.setProperty('--random-y3', `${randomY3}px`);
 
       // 设置初始位置
       particle.style.left = `${x}px`;
