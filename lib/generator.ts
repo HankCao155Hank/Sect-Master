@@ -73,7 +73,7 @@ export interface GameState {
   回合日志: string[];
   秘境索引: Record<string, unknown>[];
   世界名望榜: { 势力: string; 名望: number }[];
-  游戏模式: 'initial' | 'playing' | 'paused';
+  游戏模式: 'initial' | 'playing' | 'paused' | 'gameover';
   当前事件?: GameEvent;
 }
 

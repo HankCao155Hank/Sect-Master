@@ -17,7 +17,17 @@ import RelationshipTree from './RelationshipTree';
 import WorldMiniMap from './WorldMiniMap';
 
 export default function GameShell() {
-  const { 当前事件 } = useSectStore();
+  const { 
+    当前事件, 
+    autoTimeEnabled, 
+    timeSpeed, 
+    isPaused,
+    enableAutoTime, 
+    disableAutoTime, 
+    setTimeSpeed,
+    pauseGame,
+    resumeGame
+  } = useSectStore();
   const [activePanel, setActivePanel] = useState<string>('overview');
   const [showNPC, setShowNPC] = useState<string | null>(null);
 
@@ -156,6 +166,59 @@ export default function GameShell() {
           {/* 回合控制 */}
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-amber-200">
             <h3 className="text-lg font-bold text-amber-800 mb-3">⏰ 回合控制</h3>
+            
+            {/* 自动时间推进控制 */}
+            <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-amber-700">自动时间推进</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={autoTimeEnabled ? disableAutoTime : enableAutoTime}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                      autoTimeEnabled
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                    }`}
+                  >
+                    {autoTimeEnabled ? '⏸️ 暂停' : '▶️ 开始'}
+                  </button>
+                  <button
+                    onClick={isPaused ? resumeGame : pauseGame}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                      isPaused
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-orange-500 text-white hover:bg-orange-600'
+                    }`}
+                  >
+                    {isPaused ? '▶️ 继续' : '⏸️ 暂停'}
+                  </button>
+                </div>
+              </div>
+              
+              {/* 时间速度控制 */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-amber-600">速度:</span>
+                <select
+                  value={timeSpeed}
+                  onChange={(e) => setTimeSpeed(Number(e.target.value))}
+                  className="text-xs border border-amber-300 rounded px-2 py-1 bg-white"
+                >
+                  <option value={1000}>1秒/月</option>
+                  <option value={3000}>3秒/月</option>
+                  <option value={5000}>5秒/月</option>
+                  <option value={10000}>10秒/月</option>
+                  <option value={30000}>30秒/月</option>
+                </select>
+              </div>
+              
+              {autoTimeEnabled && (
+                <div className="mt-2 text-xs text-green-600">
+                  ⚡ 自动推进中，每月随机触发2-3个事件
+                </div>
+              )}
+            </div>
+            
+            {/* 手动控制按钮 */}
             <div className="flex gap-2">
               <button
                 onClick={() => useSectStore.getState().triggerEvent()}

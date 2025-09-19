@@ -13,6 +13,11 @@ interface SectGameState extends GameState {
   isPlaying: boolean;
   isPaused: boolean;
   
+  // 自动时间推进
+  autoTimeEnabled: boolean;
+  timeSpeed: number; // 时间推进速度（毫秒）
+  timeInterval: NodeJS.Timeout | null;
+  
   // 当前事件
   currentEvent: any | null;
   eventHistory: any[];
@@ -37,6 +42,16 @@ interface SectGameActions {
   pauseGame: () => void;
   resumeGame: () => void;
   endTurn: () => void;
+  
+  // 自动时间推进
+  enableAutoTime: () => void;
+  disableAutoTime: () => void;
+  setTimeSpeed: (speed: number) => void;
+  processAutoTime: () => void;
+  
+  // 死亡机制
+  checkDeathConditions: () => void;
+  triggerGameOver: (reason: string, message: string) => void;
   
   // 事件处理
   triggerEvent: (eventType?: string) => void;
@@ -87,6 +102,11 @@ const initialState: SectGameState = {
   // 游戏控制
   isPlaying: false,
   isPaused: false,
+  
+  // 自动时间推进
+  autoTimeEnabled: false,
+  timeSpeed: 5000, // 默认5秒推进一个月
+  timeInterval: null,
   
   // 当前事件
   eventHistory: [],
@@ -211,7 +231,7 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
       },
       
       // 结束回合
-      endTurn: () => {
+      endTurn: async () => {
         const state = get();
         
         // 推进时间
@@ -236,10 +256,147 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
           回合日志: newLogs
         });
         
+        // 每月随机触发2-3个事件
+        const eventCount = rng.nextInt(2, 3);
+        for (let i = 0; i < eventCount; i++) {
+          // 延迟触发事件，避免同时触发多个事件
+          setTimeout(async () => {
+            await get().triggerEvent();
+          }, i * 1000);
+        }
+        
+        // 检查死亡条件
+        get().checkDeathConditions();
+        
         // 自动保存
         if (state.settings.autoSave) {
           get().saveGame();
         }
+      },
+      
+      // 启用自动时间推进
+      enableAutoTime: () => {
+        const state = get();
+        if (state.timeInterval) {
+          clearInterval(state.timeInterval);
+        }
+        
+        const interval = setInterval(() => {
+          if (!state.isPaused && state.autoTimeEnabled) {
+            get().processAutoTime();
+          }
+        }, state.timeSpeed);
+        
+        set({ 
+          autoTimeEnabled: true, 
+          timeInterval: interval 
+        });
+        
+        state.addLog('⏰ 自动时间推进已启用');
+      },
+      
+      // 禁用自动时间推进
+      disableAutoTime: () => {
+        const state = get();
+        if (state.timeInterval) {
+          clearInterval(state.timeInterval);
+        }
+        
+        set({ 
+          autoTimeEnabled: false, 
+          timeInterval: null 
+        });
+        
+        state.addLog('⏸️ 自动时间推进已禁用');
+      },
+      
+      // 设置时间推进速度
+      setTimeSpeed: (speed: number) => {
+        const state = get();
+        set({ timeSpeed: speed });
+        
+        // 如果自动时间推进已启用，重新设置定时器
+        if (state.autoTimeEnabled) {
+          get().disableAutoTime();
+          get().enableAutoTime();
+        }
+        
+        state.addLog(`⚡ 时间推进速度设置为 ${speed/1000} 秒/月`);
+      },
+      
+      // 处理自动时间推进
+      processAutoTime: async () => {
+        const state = get();
+        if (state.isPaused || !state.autoTimeEnabled) return;
+        
+        await get().endTurn();
+      },
+      
+      // 检查死亡条件
+      checkDeathConditions: () => {
+        const state = get();
+        const sect = state.宗门;
+        
+        // 检查资源耗尽
+        if (sect.资源.下品 <= 0 && sect.资源.中品 <= 0 && sect.资源.上品 <= 0) {
+          get().triggerGameOver('资源耗尽', '宗门因资源耗尽而无法维持，掌门被迫解散宗门。');
+          return;
+        }
+        
+        // 检查名望过低
+        if (sect.资源.名望 <= -100) {
+          get().triggerGameOver('声名狼藉', '宗门声名狼藉，掌门无颜面对世人，选择隐退。');
+          return;
+        }
+        
+        // 检查人员过少
+        const totalMembers = sect.人员.长老.length + sect.人员.内门.length + 
+                           sect.人员.外门.length + sect.人员.真传.length;
+        if (totalMembers <= 1) {
+          get().triggerGameOver('孤家寡人', '宗门人员凋零，掌门成为孤家寡人，宗门名存实亡。');
+          return;
+        }
+        
+        // 检查掌门死亡
+        const 掌门NPC = Object.values(state.NPC索引).find(npc => 
+          npc.姓名 === sect.人员.掌门 && npc.tags.includes('掌门')
+        );
+        
+        if (掌门NPC && 掌门NPC.tags.includes('陨落')) {
+          get().triggerGameOver('掌门陨落', '掌门在修炼中陨落，宗门群龙无首，分崩离析。');
+          return;
+        }
+        
+        // 检查年龄过大（超过1000岁）
+        if (掌门NPC && 掌门NPC.年龄 > 1000) {
+          const deathChance = Math.min(0.1, (掌门NPC.年龄 - 1000) / 1000);
+          if (Math.random() < deathChance) {
+            get().triggerGameOver('寿终正寝', '掌门寿终正寝，宗门失去领袖，逐渐衰落。');
+            return;
+          }
+        }
+      },
+      
+      // 触发游戏结束
+      triggerGameOver: (reason: string, message: string) => {
+        const state = get();
+        
+        // 停止自动时间推进
+        get().disableAutoTime();
+        
+        // 添加游戏结束日志
+        state.addLog(`💀 游戏结束：${reason}`);
+        state.addLog(`📜 ${message}`);
+        
+        // 设置游戏状态
+        set({ 
+          isPlaying: false, 
+          isPaused: true,
+          游戏模式: 'gameover'
+        });
+        
+        // 保存最终存档
+        get().saveGame();
       },
       
       // 触发事件
@@ -443,6 +600,8 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
         游戏模式: state.游戏模式,
         当前事件: state.当前事件,
         eventHistory: state.eventHistory,
+        autoTimeEnabled: state.autoTimeEnabled,
+        timeSpeed: state.timeSpeed,
         settings: state.settings
       })
     }
