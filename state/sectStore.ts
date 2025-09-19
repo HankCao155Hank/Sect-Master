@@ -18,6 +18,10 @@ interface SectGameState extends GameState {
   timeSpeed: number; // 时间推进速度（毫秒）
   timeInterval: NodeJS.Timeout | null;
   
+  // 事件计数系统
+  eventCount: number; // 当前事件计数
+  eventsPerMonth: number; // 每月需要的事件数量
+  
   // 当前事件
   currentEvent: any | null;
   eventHistory: any[];
@@ -48,6 +52,11 @@ interface SectGameActions {
   disableAutoTime: () => void;
   setTimeSpeed: (speed: number) => void;
   processAutoTime: () => void;
+  
+  // 事件计数系统
+  incrementEventCount: () => void;
+  resetEventCount: () => void;
+  advanceTimeByEvent: () => void;
   
   // 死亡机制
   checkDeathConditions: () => void;
@@ -107,6 +116,10 @@ const initialState: SectGameState = {
   autoTimeEnabled: false,
   timeSpeed: 5000, // 默认5秒推进一个月
   timeInterval: null,
+  
+  // 事件计数系统
+  eventCount: 0,
+  eventsPerMonth: 3, // 每3个事件推进一个月
   
   // 当前事件
   eventHistory: [],
@@ -188,6 +201,11 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
           isPaused: false,
           回合日志: [`🏯 宗门"${sect.名称}"成立！掌门${sect.人员.掌门}开始执掌宗门。`]
         });
+        
+        // 游戏开始后自动触发第一个事件
+        setTimeout(async () => {
+          await get().triggerEvent();
+        }, 1000);
       },
       
       // 加载游戏
@@ -257,7 +275,7 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
         });
         
         // 每月随机触发2-3个事件
-        const eventCount = rng.nextInt(2, 3);
+        const eventCount = rng.int(2, 3);
         for (let i = 0; i < eventCount; i++) {
           // 延迟触发事件，避免同时触发多个事件
           setTimeout(async () => {
@@ -330,6 +348,56 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
         if (state.isPaused || !state.autoTimeEnabled) return;
         
         await get().endTurn();
+      },
+      
+      // 增加事件计数
+      incrementEventCount: () => {
+        const state = get();
+        const newEventCount = state.eventCount + 1;
+        
+        set({ eventCount: newEventCount });
+        
+        // 检查是否达到每月事件数量
+        if (newEventCount >= state.eventsPerMonth) {
+          get().resetEventCount();
+          get().advanceTimeByEvent();
+        }
+      },
+      
+      // 重置事件计数
+      resetEventCount: () => {
+        set({ eventCount: 0 });
+      },
+      
+      // 基于事件推进时间
+      advanceTimeByEvent: async () => {
+        const state = get();
+        
+        // 推进时间
+        const newMonth = state.日期.月 + 1;
+        const newYear = newMonth > 12 ? state.日期.年 + 1 : state.日期.年;
+        const finalMonth = newMonth > 12 ? 1 : newMonth;
+        
+        // 更新回合数
+        const newTurn = state.回合 + 1;
+        
+        // 添加新日志
+        const newLogs = [...state.回合日志];
+        newLogs.push(`📅 第${newTurn}回合结束，时间推进至灵历${newYear}年${finalMonth}月`);
+        
+        set({
+          回合: newTurn,
+          日期: { 年: newYear, 月: finalMonth },
+          回合日志: newLogs
+        });
+        
+        // 检查死亡条件
+        get().checkDeathConditions();
+        
+        // 自动保存
+        if (state.settings.autoSave) {
+          get().saveGame();
+        }
       },
       
       // 检查死亡条件
@@ -415,7 +483,7 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
       },
       
       // 选择事件选项
-      selectEventOption: (optionId: string) => {
+      selectEventOption: async (optionId: string) => {
         const state = get();
         if (!state.当前事件) return;
         
@@ -442,8 +510,16 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
           const message = success ? result.成功效果 : result.失败效果;
           state.addLog(`🎯 ${message}`);
           
+          // 增加事件计数
+          get().incrementEventCount();
+          
           // 清除当前事件
           set({ 当前事件: undefined });
+          
+          // 延迟1秒后自动触发下一个事件
+          setTimeout(async () => {
+            await get().triggerEvent();
+          }, 1000);
           
         } catch (error) {
           state.addLog(`❌ 执行选项失败：${error}`);
@@ -602,6 +678,8 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
         eventHistory: state.eventHistory,
         autoTimeEnabled: state.autoTimeEnabled,
         timeSpeed: state.timeSpeed,
+        eventCount: state.eventCount,
+        eventsPerMonth: state.eventsPerMonth,
         settings: state.settings
       })
     }

@@ -19,12 +19,9 @@ import WorldMiniMap from './WorldMiniMap';
 export default function GameShell() {
   const { 
     当前事件, 
-    autoTimeEnabled, 
-    timeSpeed, 
+    eventCount, 
+    eventsPerMonth,
     isPaused,
-    enableAutoTime, 
-    disableAutoTime, 
-    setTimeSpeed,
     pauseGame,
     resumeGame
   } = useSectStore();
@@ -163,75 +160,57 @@ export default function GameShell() {
             </div>
           </div>
 
-          {/* 回合控制 */}
+          {/* 游戏状态 */}
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-amber-200">
-            <h3 className="text-lg font-bold text-amber-800 mb-3">⏰ 回合控制</h3>
+            <h3 className="text-lg font-bold text-amber-800 mb-3">🎮 游戏状态</h3>
             
-            {/* 自动时间推进控制 */}
+            {/* 事件进度显示 */}
             <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-amber-700">自动时间推进</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={autoTimeEnabled ? disableAutoTime : enableAutoTime}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-all ${
-                      autoTimeEnabled
-                        ? 'bg-green-500 text-white hover:bg-green-600'
-                        : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                    }`}
-                  >
-                    {autoTimeEnabled ? '⏸️ 暂停' : '▶️ 开始'}
-                  </button>
-                  <button
-                    onClick={isPaused ? resumeGame : pauseGame}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-all ${
-                      isPaused
-                        ? 'bg-blue-500 text-white hover:bg-blue-600'
-                        : 'bg-orange-500 text-white hover:bg-orange-600'
-                    }`}
-                  >
-                    {isPaused ? '▶️ 继续' : '⏸️ 暂停'}
-                  </button>
-                </div>
+                <span className="text-sm font-medium text-amber-700">本月事件进度</span>
+                <span className="text-sm font-bold text-amber-800">
+                  {eventCount} / {eventsPerMonth}
+                </span>
               </div>
               
-              {/* 时间速度控制 */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-amber-600">速度:</span>
-                <select
-                  value={timeSpeed}
-                  onChange={(e) => setTimeSpeed(Number(e.target.value))}
-                  className="text-xs border border-amber-300 rounded px-2 py-1 bg-white"
-                >
-                  <option value={1000}>1秒/月</option>
-                  <option value={3000}>3秒/月</option>
-                  <option value={5000}>5秒/月</option>
-                  <option value={10000}>10秒/月</option>
-                  <option value={30000}>30秒/月</option>
-                </select>
+              {/* 进度条 */}
+              <div className="w-full bg-amber-200 rounded-full h-2 mb-2">
+                <div 
+                  className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(eventCount / eventsPerMonth) * 100}%` }}
+                ></div>
               </div>
               
-              {autoTimeEnabled && (
-                <div className="mt-2 text-xs text-green-600">
-                  ⚡ 自动推进中，每月随机触发2-3个事件
-                </div>
-              )}
+              <div className="text-xs text-amber-600">
+                {eventCount >= eventsPerMonth ? 
+                  '✅ 本月事件已完成，时间将推进到下个月' : 
+                  `📅 还需 ${eventsPerMonth - eventCount} 个事件完成本月`
+                }
+              </div>
             </div>
             
-            {/* 手动控制按钮 */}
+            {/* 游戏控制 */}
             <div className="flex gap-2">
               <button
-                onClick={() => useSectStore.getState().triggerEvent()}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition-all duration-300"
+                onClick={isPaused ? resumeGame : pauseGame}
+                className={`flex-1 px-4 py-2 font-bold rounded-lg transition-all duration-300 ${
+                  isPaused
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-orange-500 text-white hover:bg-orange-600'
+                }`}
               >
-                🎭 触发事件
+                {isPaused ? '▶️ 继续游戏' : '⏸️ 暂停游戏'}
               </button>
-              <button
-                onClick={() => useSectStore.getState().endTurn()}
-                className="flex-1 px-4 py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition-all duration-300"
-              >
-                ⏭️ 结束回合
-              </button>
+            </div>
+            
+            {/* 游戏说明 */}
+            <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-xs text-blue-700">
+                💡 <strong>游戏说明：</strong><br/>
+                • 选择事件选项后会自动触发下一个事件<br/>
+                • 每完成 {eventsPerMonth} 个事件，时间推进一个月<br/>
+                • 游戏会自动检查死亡条件并结束
+              </div>
             </div>
           </div>
         </div>
