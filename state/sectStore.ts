@@ -6,6 +6,8 @@ import { GameState, NPC, Sect } from '../lib/generator';
 import { NPCGenerator, SectGenerator, WorldGenerator } from '../lib/generator';
 import { EventDispatcher } from '../lib/events';
 import { rng } from '../lib/rng';
+import { audioManager } from '../lib/audio';
+import { effectsManager } from '../lib/effects';
 
 // 游戏状态接口
 interface SectGameState extends GameState {
@@ -452,6 +454,19 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
         // 停止自动时间推进
         get().disableAutoTime();
         
+        // 播放死亡音效
+        audioManager.playSound('death');
+        
+        // 创建死亡特效
+        if (typeof window !== 'undefined') {
+          effectsManager.createScreenShake(20, 1000);
+          effectsManager.createParticleEffect(
+            window.innerWidth / 2, 
+            window.innerHeight / 2, 
+            { count: 30, color: '#dc2626', size: 6, duration: 2000, type: 'lightning' }
+          );
+        }
+        
         // 添加游戏结束日志
         state.addLog(`💀 游戏结束：${reason}`);
         state.addLog(`📜 ${message}`);
@@ -479,6 +494,19 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
           });
           
           state.addLog(`🎭 触发事件：${event.标题}`);
+          
+          // 播放事件触发音效
+          audioManager.playSound('event-trigger');
+          
+          // 创建事件特效
+          const eventTypeForEffect = event.类型 || 'world';
+          if (typeof window !== 'undefined') {
+            effectsManager.createEventEffect(
+              window.innerWidth / 2, 
+              window.innerHeight / 2, 
+              eventTypeForEffect
+            );
+          }
         }
       },
       
@@ -509,6 +537,26 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
           const success = Math.random() < result.成功概率;
           const message = success ? result.成功效果 : result.失败效果;
           state.addLog(`🎯 ${message}`);
+          
+          // 播放结果音效
+          if (success) {
+            audioManager.playSound('success');
+          } else {
+            audioManager.playSound('error');
+          }
+          
+          // 创建结果特效
+          if (typeof window !== 'undefined') {
+            if (success) {
+              effectsManager.createParticleEffect(
+                window.innerWidth / 2, 
+                window.innerHeight / 2, 
+                { count: 8, color: '#10b981', size: 4, duration: 800, type: 'sparkle' }
+              );
+            } else {
+              effectsManager.createScreenShake(5, 300);
+            }
+          }
           
           // 增加事件计数
           get().incrementEventCount();

@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useSectStore } from '../../../state/sectStore';
+import { audioManager } from '../../../lib/audio';
 import StatusBar from './StatusBar';
 import EventPanel from './EventPanel';
 import OptionPanel from './OptionPanel';
@@ -15,6 +16,7 @@ import DisciplineHall from './DisciplineHall';
 import LibraryAndPlaces from './LibraryAndPlaces';
 import RelationshipTree from './RelationshipTree';
 import WorldMiniMap from './WorldMiniMap';
+import AudioControls from './AudioControls';
 
 export default function GameShell() {
   const { 
@@ -28,6 +30,12 @@ export default function GameShell() {
   const [activePanel, setActivePanel] = useState<string>('overview');
   const [showNPC, setShowNPC] = useState<string | null>(null);
 
+  // 按钮点击处理函数
+  const handleButtonClick = (action: () => void) => {
+    audioManager.playSound('button-click');
+    action();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
       {/* 顶部状态栏 */}
@@ -37,13 +45,16 @@ export default function GameShell() {
       <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)]">
         {/* 左侧面板区域 */}
         <div className="lg:w-1/4 p-4 space-y-4">
+          {/* 音效控制 */}
+          <AudioControls />
+          
           {/* 导航按钮 */}
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-amber-200">
             <h3 className="text-lg font-bold text-amber-800 mb-3">🏯 宗门管理</h3>
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => setActivePanel('overview')}
-                className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                onClick={() => handleButtonClick(() => setActivePanel('overview'))}
+                className={`p-2 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
                   activePanel === 'overview'
                     ? 'bg-amber-500 text-white'
                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -52,8 +63,8 @@ export default function GameShell() {
                 📊 总览
               </button>
               <button
-                onClick={() => setActivePanel('tasks')}
-                className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                onClick={() => handleButtonClick(() => setActivePanel('tasks'))}
+                className={`p-2 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
                   activePanel === 'tasks'
                     ? 'bg-amber-500 text-white'
                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -62,8 +73,8 @@ export default function GameShell() {
                 🏛️ 大殿
               </button>
               <button
-                onClick={() => setActivePanel('discipline')}
-                className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                onClick={() => handleButtonClick(() => setActivePanel('discipline'))}
+                className={`p-2 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
                   activePanel === 'discipline'
                     ? 'bg-amber-500 text-white'
                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -72,8 +83,8 @@ export default function GameShell() {
                 ⚖️ 戒律堂
               </button>
               <button
-                onClick={() => setActivePanel('library')}
-                className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                onClick={() => handleButtonClick(() => setActivePanel('library'))}
+                className={`p-2 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
                   activePanel === 'library'
                     ? 'bg-amber-500 text-white'
                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -82,8 +93,8 @@ export default function GameShell() {
                 📚 建筑
               </button>
               <button
-                onClick={() => setActivePanel('relationships')}
-                className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                onClick={() => handleButtonClick(() => setActivePanel('relationships'))}
+                className={`p-2 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
                   activePanel === 'relationships'
                     ? 'bg-amber-500 text-white'
                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -92,8 +103,8 @@ export default function GameShell() {
                 🌳 关系网
               </button>
               <button
-                onClick={() => setActivePanel('world')}
-                className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                onClick={() => handleButtonClick(() => setActivePanel('world'))}
+                className={`p-2 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
                   activePanel === 'world'
                     ? 'bg-amber-500 text-white'
                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -192,8 +203,8 @@ export default function GameShell() {
             {/* 游戏控制 */}
             <div className="flex gap-2">
               <button
-                onClick={isPaused ? resumeGame : pauseGame}
-                className={`flex-1 px-4 py-2 font-bold rounded-lg transition-all duration-300 ${
+                onClick={() => handleButtonClick(() => isPaused ? resumeGame() : pauseGame())}
+                className={`flex-1 px-4 py-2 font-bold rounded-lg transition-all duration-300 hover:scale-105 ${
                   isPaused
                     ? 'bg-blue-500 text-white hover:bg-blue-600'
                     : 'bg-orange-500 text-white hover:bg-orange-600'

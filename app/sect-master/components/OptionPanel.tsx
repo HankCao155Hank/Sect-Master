@@ -4,6 +4,8 @@
 
 import { GameEvent } from '../../../lib/generator';
 import { useSectStore } from '../../../state/sectStore';
+import { audioManager } from '../../../lib/audio';
+import { effectsManager } from '../../../lib/effects';
 
 interface OptionPanelProps {
   event: GameEvent;
@@ -13,6 +15,18 @@ export default function OptionPanel({ event }: OptionPanelProps) {
   const { selectEventOption } = useSectStore();
 
   const handleOptionClick = (optionId: string) => {
+    // 播放选择音效
+    audioManager.playSound('button-click');
+    
+    // 创建选择特效
+    if (typeof window !== 'undefined') {
+      effectsManager.createParticleEffect(
+        window.innerWidth / 2, 
+        window.innerHeight / 2, 
+        { count: 5, color: '#f59e0b', size: 3, duration: 500, type: 'sparkle' }
+      );
+    }
+    
     selectEventOption(optionId);
   };
 
@@ -27,7 +41,7 @@ export default function OptionPanel({ event }: OptionPanelProps) {
           <button
             key={option.id}
             onClick={() => handleOptionClick(option.id)}
-            className="w-full p-4 text-left bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 rounded-lg border border-amber-200 hover:border-amber-300 transition-all duration-300 hover:shadow-md group"
+            className="w-full p-4 text-left bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 rounded-lg border border-amber-200 hover:border-amber-300 transition-all duration-300 hover:shadow-md hover:scale-105 group animate-fade-in"
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold text-sm group-hover:bg-amber-600 transition-colors">
