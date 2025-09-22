@@ -90,7 +90,24 @@ export class RelationshipUtils {
   // 根据行动类型选择合适的NPC
   static selectNPCForAction(npcs: NPC[], actionType: string): { npc: NPC; relatedName?: string } {
     if (npcs.length === 0) {
-      return { npc: null as any, relatedName: '某位弟子' };
+      // 创建一个默认的NPC对象
+      const defaultNPC: NPC = {
+        id: 'default',
+        姓名: '某位弟子',
+        年龄: 20,
+        性别: '男',
+        外貌: '普通',
+        性格: ['温和', '友善'],
+        境界: '引气入体',
+        主修: '剑修',
+        灵根: { 等级: '下品', 属性: ['金'], 表达: '金灵根' },
+        天赋: 50,
+        tags: [],
+        关系网: { label: '某位弟子', children: [] },
+        人生经历: [],
+        状态: ['健康']
+      };
+      return { npc: defaultNPC, relatedName: '某位弟子' };
     }
 
     const npc = rng.choice(npcs);
@@ -134,7 +151,7 @@ export class RelationshipUtils {
     relationshipTree: RelationshipNode, 
     targetName: string, 
     relationshipType: RelationshipType,
-    strengthChange: number
+    _strengthChange: number
   ): RelationshipNode {
     const newTree = JSON.parse(JSON.stringify(relationshipTree)); // 深拷贝
     

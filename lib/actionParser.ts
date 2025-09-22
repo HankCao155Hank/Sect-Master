@@ -541,7 +541,7 @@ export class ActionParser {
   }
 
   // 执行默认行动
-  private static executeDefaultAction(action: string, _gameState: GameState): ActionResult {
+  private static executeDefaultAction(action: string): ActionResult {
     const success = rng.next() < 0.5;
     return {
       成功: success,
