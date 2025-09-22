@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSectStore } from '../../../state/sectStore';
 import { audioManager } from '../../../lib/audio';
 import StatusBar from './StatusBar';
@@ -16,8 +16,6 @@ import DisciplineHall from './DisciplineHall';
 import LibraryAndPlaces from './LibraryAndPlaces';
 import RelationshipTree from './RelationshipTree';
 import WorldMiniMap from './WorldMiniMap';
-import AudioControls from './AudioControls';
-import EffectsTest from './EffectsTest';
 
 export default function GameShell() {
   const { 
@@ -26,15 +24,30 @@ export default function GameShell() {
     eventsPerMonth,
     isPaused,
     pauseGame,
-    resumeGame
+    resumeGame,
+    getActionSuggestions
   } = useSectStore();
   const [activePanel, setActivePanel] = useState<string>('overview');
   const [showNPC, setShowNPC] = useState<string | null>(null);
+  const [actionSuggestions, setActionSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+
+  // 获取行动建议
+  useEffect(() => {
+    const suggestions = getActionSuggestions();
+    setActionSuggestions(suggestions);
+  }, [getActionSuggestions, 当前事件, eventCount]);
 
   // 按钮点击处理函数
   const handleButtonClick = (action: () => void) => {
     audioManager.playSound('button-click');
     action();
+  };
+
+  // 执行建议行动
+  const executeSuggestion = (suggestion: string) => {
+    useSectStore.getState().executePlayerAction(suggestion);
+    setShowSuggestions(false);
   };
 
   return (
@@ -46,12 +59,6 @@ export default function GameShell() {
       <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)]">
         {/* 左侧面板区域 */}
         <div className="lg:w-1/4 p-4 space-y-4">
-          {/* 音效控制 */}
-          <AudioControls />
-          
-          {/* 特效测试 */}
-          <EffectsTest />
-          
           {/* 导航按钮 */}
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-amber-200">
             <h3 className="text-lg font-bold text-amber-800 mb-3">🏯 宗门管理</h3>
@@ -142,37 +149,61 @@ export default function GameShell() {
             <OptionPanel event={当前事件} />
           )}
 
-          {/* 自由行动输入 */}
+          {/* 智能行动建议 */}
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-amber-200">
-            <h3 className="text-lg font-bold text-amber-800 mb-3">🎮 自由行动</h3>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="输入你的行动（如：修炼、招收弟子、建设宗门等）"
-                className="flex-1 p-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    const input = e.target as HTMLInputElement;
-                    if (input.value.trim()) {
-                      useSectStore.getState().executePlayerAction(input.value.trim());
-                      input.value = '';
-                    }
-                  }
-                }}
-              />
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-bold text-amber-800">🎮 智能行动</h3>
               <button
-                onClick={() => {
-                  const input = document.querySelector('input[type="text"]') as HTMLInputElement;
-                  if (input && input.value.trim()) {
-                    useSectStore.getState().executePlayerAction(input.value.trim());
-                    input.value = '';
-                  }
-                }}
-                className="px-4 py-2 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600 transition-all duration-300"
+                onClick={() => setShowSuggestions(!showSuggestions)}
+                className="px-3 py-1 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
               >
-                执行
+                {showSuggestions ? '🔼 收起建议' : '💡 查看建议'}
               </button>
             </div>
+            
+            {/* 行动建议 */}
+            {showSuggestions && (
+              <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <h4 className="text-sm font-bold text-blue-800 mb-4 flex items-center">
+                  💡 基于当前状态的智能行动建议
+                </h4>
+                <div className="grid grid-cols-1 gap-3">
+                  {actionSuggestions.slice(0, 6).map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => executeSuggestion(suggestion)}
+                      className="text-left p-3 text-sm bg-white rounded-lg border border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:shadow-md transition-all duration-200 shadow-sm group"
+                    >
+                      <div className="flex items-center">
+                        <span className="mr-2 text-blue-500 group-hover:text-blue-600">▶</span>
+                        <span className="flex-1">{suggestion}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 p-2 bg-blue-100 rounded-lg">
+                  <div className="text-xs text-blue-700 flex items-center">
+                    <span className="mr-1">💡</span>
+                    点击任意建议即可执行该行动，系统会根据建筑状态、NPC关系和世界状态智能推荐
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {!showSuggestions && (
+              <div className="text-center py-6">
+                <div className="mb-4">
+                  <div className="text-4xl mb-2">🎮</div>
+                  <h4 className="text-lg font-bold text-amber-800 mb-2">智能行动系统</h4>
+                </div>
+                <p className="text-amber-600 mb-3">点击上方按钮查看智能行动建议</p>
+                <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                  <p className="text-xs text-amber-700">
+                    💡 系统会根据当前建筑状态、NPC关系和世界状态为您推荐最佳行动
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 游戏状态 */}

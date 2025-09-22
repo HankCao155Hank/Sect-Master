@@ -8,6 +8,7 @@ import { EventDispatcher } from '../lib/events';
 import { rng } from '../lib/rng';
 import { audioManager } from '../lib/audio';
 import { effectsManager } from '../lib/effects';
+import { ActionParser } from '../lib/actionParser';
 
 // 游戏状态接口
 interface SectGameState extends GameState {
@@ -28,8 +29,6 @@ interface SectGameState extends GameState {
   currentEvent: any | null;
   eventHistory: any[];
   
-  // 玩家输入
-  playerInput: string;
   
   // 游戏设置
   settings: {
@@ -95,6 +94,9 @@ interface SectGameActions {
   resetGame: () => void;
   exportSave: () => string;
   importSave: (saveData: string) => void;
+  
+  // 行动建议
+  getActionSuggestions: () => string[];
 }
 
 // 初始状态
@@ -125,9 +127,6 @@ const initialState: SectGameState = {
   
   // 当前事件
   eventHistory: [],
-  
-  // 玩家输入
-  playerInput: '',
   
   // 游戏设置
   settings: {
@@ -578,23 +577,51 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
       executePlayerAction: (action: string) => {
         const state = get();
         
-        // 简单的行动解析（实际项目中需要更复杂的解析器）
-        if (action.includes('修炼')) {
-          state.addLog(`🧘 执行修炼行动：${action}`);
-          state.updateResources({ 贡献: 50 });
-        } else if (action.includes('招收')) {
-          state.addLog(`👥 执行招收行动：${action}`);
-          state.updateResources({ 贡献: 100, 名望: 50 });
-        } else if (action.includes('建设')) {
-          state.addLog(`🏗️ 执行建设行动：${action}`);
-          state.updateResources({ 下品: -500, 贡献: 200 });
-        } else {
-          state.addLog(`🎮 执行自定义行动：${action}`);
-          state.updateResources({ 贡献: 30 });
+        try {
+          // 使用增强的行动解析器
+          const result = ActionParser.parseAndExecute(action, {
+            宗门: state.宗门,
+            NPC索引: state.NPC索引,
+            世界名望榜: state.世界名望榜,
+            秘境索引: state.秘境索引
+          });
+          
+          // 记录行动结果
+          const emoji = result.成功 ? '✅' : '❌';
+          state.addLog(`${emoji} ${result.描述}`);
+          
+          // 应用资源变化
+          if (result.资源变化) {
+            state.updateResources(result.资源变化);
+          }
+          
+          // 应用状态变化
+          if (result.状态变化) {
+            result.状态变化.forEach(status => {
+              state.addLog(`📝 状态变化：${status}`);
+            });
+          }
+          
+          // 播放音效和特效
+          if (result.成功) {
+            audioManager.playSound('success');
+            if (typeof window !== 'undefined') {
+              effectsManager.createParticleEffect(
+                window.innerWidth / 2, 
+                window.innerHeight / 2, 
+                { count: 6, color: '#10b981', size: 4, duration: 800, type: 'sparkle' }
+              );
+            }
+          } else {
+            audioManager.playSound('error');
+            if (typeof window !== 'undefined') {
+              effectsManager.createScreenShake(3, 200);
+            }
+          }
+          
+        } catch (error) {
+          state.addLog(`❌ 执行行动失败：${error}`);
         }
-        
-        // 清除玩家输入
-        set({ playerInput: '' });
       },
       
       // 更新宗门
@@ -708,6 +735,16 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
         } catch (error) {
           get().addLog('❌ 存档导入失败：格式错误');
         }
+      },
+      
+      // 获取行动建议
+      getActionSuggestions: () => {
+        const state = get();
+        return ActionParser.getActionSuggestions({
+          宗门: state.宗门,
+          NPC索引: state.NPC索引,
+          世界名望榜: state.世界名望榜
+        });
       }
     }),
     {
