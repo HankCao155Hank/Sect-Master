@@ -2,6 +2,7 @@
 
 import { rng } from './rng';
 import { Sect, NPC } from './generator';
+import { RelationshipUtils } from './relationshipUtils';
 
 // 游戏状态接口
 interface GameState {
@@ -9,6 +10,15 @@ interface GameState {
   NPC索引: Record<string, NPC>;
   世界名望榜: { 势力: string; 名望: number }[];
   秘境索引: unknown[];
+}
+
+// 关系变化接口
+export interface RelationshipChange {
+  npcId: string;
+  targetName: string;
+  relationshipType: '师父' | '同门' | '仇人' | '恩人' | '挚友' | '恋人' | '道侣' | '敌人' | '盟友';
+  strengthChange: number; // 关系强度变化，-100 到 100
+  action: 'add' | 'remove' | 'update'; // 添加、移除或更新关系
 }
 
 // 行动结果接口
@@ -23,6 +33,7 @@ export interface ActionResult {
     名望?: number;
   };
   状态变化?: string[];
+  关系变化?: RelationshipChange[];
   新事件?: string;
 }
 
@@ -114,14 +125,17 @@ export class ActionParser {
     const buildings = 宗门.建筑;
     const npcs = Object.values(NPC索引);
     
-    // 获取随机NPC姓名
-    const getRandomNPC = () => npcs.length > 0 ? npcs[Math.floor(rng.next() * npcs.length)].姓名 : '某位弟子';
+    // 从关系网中获取具体人名
+    const getNPCFromRelationships = () => {
+      if (npcs.length === 0) return '某位弟子';
+      return RelationshipUtils.getRandomNameFromRelationships(npcs);
+    };
     
     // 检查藏书阁相关行动
     if (action.includes('藏书') || action.includes('研究')) {
       if (buildings.藏书阁?.启用) {
         const success = rng.next() < 0.7;
-        const npcName = getRandomNPC();
+        const npcName = getNPCFromRelationships();
         return {
           成功: success,
           描述: success ? 
@@ -141,7 +155,7 @@ export class ActionParser {
     if (action.includes('炼丹') || action.includes('炼制')) {
       if (buildings.炼丹房?.启用) {
         const success = rng.next() < 0.6;
-        const npcName = getRandomNPC();
+        const npcName = getNPCFromRelationships();
         const pillTypes = ['聚气丹', '筑基丹', '金丹', '元婴丹', '化神丹'];
         const pillType = rng.choice(pillTypes);
         return {
@@ -163,7 +177,7 @@ export class ActionParser {
     if (action.includes('炼器') || action.includes('锻造')) {
       if (buildings.炼器坊?.启用) {
         const success = rng.next() < 0.65;
-        const npcName = getRandomNPC();
+        const npcName = getNPCFromRelationships();
         const weaponTypes = ['飞剑', '法袍', '护甲', '法器', '灵宝'];
         const weaponType = rng.choice(weaponTypes);
         return {
@@ -185,7 +199,7 @@ export class ActionParser {
     if (action.includes('剑冢') || action.includes('铸剑')) {
       if (buildings.剑冢?.启用) {
         const success = rng.next() < 0.5;
-        const npcName = getRandomNPC();
+        const npcName = getNPCFromRelationships();
         const swordArts = ['御剑术', '剑气纵横', '万剑归宗', '剑意通神', '无上剑道'];
         const swordArt = rng.choice(swordArts);
         return {
@@ -207,7 +221,7 @@ export class ActionParser {
     if (action.includes('思过') || action.includes('闭关')) {
       if (buildings.思过崖?.启用) {
         const success = rng.next() < 0.8;
-        const npcName = getRandomNPC();
+        const npcName = getNPCFromRelationships();
         return {
           成功: success,
           描述: success ? 
@@ -227,7 +241,7 @@ export class ActionParser {
     if (action.includes('戒律') || action.includes('惩罚')) {
       if (buildings.戒律堂?.启用) {
         const success = rng.next() < 0.9;
-        const npcName = getRandomNPC();
+        const npcName = getNPCFromRelationships();
         return {
           成功: success,
           描述: success ? 
@@ -247,7 +261,7 @@ export class ActionParser {
     if (action.includes('大殿') || action.includes('议事')) {
       if (buildings.大殿?.启用) {
         const success = rng.next() < 0.85;
-        const npcName = getRandomNPC();
+        const npcName = getNPCFromRelationships();
         const meetingTopics = ['宗门发展规划', '弟子招收计划', '资源分配方案', '修炼资源调配', '宗门安全防御'];
         const topic = rng.choice(meetingTopics);
         return {
@@ -339,47 +353,116 @@ export class ActionParser {
     }
     
     if (action.includes('指导') || action.includes('传授')) {
-      const targetNPC = npcs[Math.floor(rng.next() * npcs.length)];
+      const { npc, relatedName } = RelationshipUtils.selectNPCForAction(npcs, action);
       const success = rng.next() < 0.8;
       const cultivationTypes = ['修炼功法', '剑法技巧', '炼丹术', '炼器术', '阵法知识'];
       const skill = rng.choice(cultivationTypes);
       
+      // 生成关系变化
+      const relationshipChanges: RelationshipChange[] = [];
+      if (success) {
+        // 成功的指导会加强师徒关系
+        relationshipChanges.push({
+          npcId: npc.id,
+          targetName: relatedName,
+          relationshipType: '师父',
+          strengthChange: 20,
+          action: 'update'
+        });
+      } else {
+        // 失败的指导可能会稍微影响关系
+        relationshipChanges.push({
+          npcId: npc.id,
+          targetName: relatedName,
+          relationshipType: '师父',
+          strengthChange: -5,
+          action: 'update'
+        });
+      }
+      
       return {
         成功: success,
         描述: success ? 
-          `成功指导${targetNPC.姓名}学习${skill}，其修为境界得到显著提升，师徒关系更加深厚` : 
-          `指导${targetNPC.姓名}学习${skill}时遇到瓶颈，需要更多时间耐心教导`,
-        资源变化: success ? { 贡献: 60, 名望: 30 } : { 贡献: 20 }
+          `${npc.姓名}成功指导${relatedName}学习${skill}，其修为境界得到显著提升，师徒关系更加深厚` : 
+          `${npc.姓名}指导${relatedName}学习${skill}时遇到瓶颈，需要更多时间耐心教导`,
+        资源变化: success ? { 贡献: 60, 名望: 30 } : { 贡献: 20 },
+        关系变化: relationshipChanges
       };
     }
     
     if (action.includes('切磋') || action.includes('论道')) {
-      const targetNPC = npcs[Math.floor(rng.next() * npcs.length)];
+      const { npc, relatedName } = RelationshipUtils.selectNPCForAction(npcs, action);
       const success = rng.next() < 0.7;
       const topics = ['修炼心得', '剑道感悟', '丹道奥秘', '器道精髓', '阵法玄机'];
       const topic = rng.choice(topics);
       
-      return {
-        成功: success,
-        描述: success ? 
-          `与${targetNPC.姓名}切磋论道关于${topic}，双方都有所收获，修为境界得到提升，友谊更加深厚` : 
-          `与${targetNPC.姓名}切磋论道关于${topic}时观点分歧较大，需要更多时间深入交流`,
-        资源变化: success ? { 贡献: 80, 名望: 40 } : { 贡献: 30 }
-      };
-    }
-    
-    if (action.includes('谈心') || action.includes('交流')) {
-      const targetNPC = npcs[Math.floor(rng.next() * npcs.length)];
-      const success = rng.next() < 0.9;
-      const topics = ['修炼困惑', '人生感悟', '宗门发展', '未来规划', '内心烦恼'];
-      const topic = rng.choice(topics);
+      // 生成关系变化
+      const relationshipChanges: RelationshipChange[] = [];
+      if (success) {
+        // 成功的切磋会加强友谊
+        relationshipChanges.push({
+          npcId: npc.id,
+          targetName: relatedName,
+          relationshipType: '挚友',
+          strengthChange: 15,
+          action: 'update'
+        });
+      } else {
+        // 失败的切磋可能会影响关系
+        relationshipChanges.push({
+          npcId: npc.id,
+          targetName: relatedName,
+          relationshipType: '挚友',
+          strengthChange: -3,
+          action: 'update'
+        });
+      }
       
       return {
         成功: success,
         描述: success ? 
-          `与${targetNPC.姓名}深入交流关于${topic}，增进了彼此的了解，关系更加亲密，宗门凝聚力得到提升` : 
-          `与${targetNPC.姓名}交流关于${topic}时出现了一些误解，需要更多时间澄清和沟通`,
-        资源变化: success ? { 贡献: 40, 名望: 20 } : { 贡献: 10 }
+          `${npc.姓名}与${relatedName}切磋论道关于${topic}，双方都有所收获，修为境界得到提升，友谊更加深厚` : 
+          `${npc.姓名}与${relatedName}切磋论道关于${topic}时观点分歧较大，需要更多时间深入交流`,
+        资源变化: success ? { 贡献: 80, 名望: 40 } : { 贡献: 30 },
+        关系变化: relationshipChanges
+      };
+    }
+    
+    if (action.includes('谈心') || action.includes('交流')) {
+      const { npc, relatedName } = RelationshipUtils.selectNPCForAction(npcs, action);
+      const success = rng.next() < 0.9;
+      const topics = ['修炼困惑', '人生感悟', '宗门发展', '未来规划', '内心烦恼'];
+      const topic = rng.choice(topics);
+      
+      // 生成关系变化
+      const relationshipChanges: RelationshipChange[] = [];
+      if (success) {
+        // 成功的谈心会加强友谊
+        relationshipChanges.push({
+          npcId: npc.id,
+          targetName: relatedName,
+          relationshipType: '挚友',
+          strengthChange: 10,
+          action: 'update'
+        });
+      } else {
+        // 失败的谈心可能会稍微影响关系
+        relationshipChanges.push({
+          npcId: npc.id,
+          targetName: relatedName,
+          relationshipType: '挚友',
+          strengthChange: -2,
+          action: 'update'
+        });
+      }
+      
+      return {
+        成功: success,
+        描述: success ? 
+          `${npc.姓名}与${relatedName}深入交流关于${topic}，增进了彼此的了解，关系更加亲密，宗门凝聚力得到提升` : 
+          `${npc.姓名}与${relatedName}交流关于${topic}时出现了一些误解，需要更多时间澄清和沟通`,
+        资源变化: success ? { 贡献: 40, 名望: 20 } : { 贡献: 10 },
+        关系变化: relationshipChanges
       };
     }
     
@@ -393,7 +476,7 @@ export class ActionParser {
   private static executeCultivationAction(action: string, gameState: GameState): ActionResult {
     const { NPC索引 } = gameState;
     const npcs = Object.values(NPC索引);
-    const npcName = npcs.length > 0 ? npcs[Math.floor(rng.next() * npcs.length)].姓名 : '掌门';
+    const npcName = npcs.length > 0 ? RelationshipUtils.getRandomNameFromRelationships(npcs) : '掌门';
     
     const success = rng.next() < 0.8;
     const breakthrough = rng.next() < 0.3;
@@ -421,7 +504,7 @@ export class ActionParser {
   private static executeSectManagementAction(action: string, gameState: GameState): ActionResult {
     const { NPC索引 } = gameState;
     const npcs = Object.values(NPC索引);
-    const npcName = npcs.length > 0 ? npcs[Math.floor(rng.next() * npcs.length)].姓名 : '掌门';
+    const npcName = npcs.length > 0 ? RelationshipUtils.getRandomNameFromRelationships(npcs) : '掌门';
     
     if (action.includes('招收') || action.includes('弟子')) {
       const success = rng.next() < 0.6;

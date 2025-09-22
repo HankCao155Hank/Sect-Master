@@ -8,7 +8,8 @@ import { EventDispatcher } from '../lib/events';
 import { rng } from '../lib/rng';
 import { audioManager } from '../lib/audio';
 import { effectsManager } from '../lib/effects';
-import { ActionParser } from '../lib/actionParser';
+import { ActionParser, RelationshipChange } from '../lib/actionParser';
+import { RelationshipUtils } from '../lib/relationshipUtils';
 
 // 游戏状态接口
 interface SectGameState extends GameState {
@@ -97,6 +98,9 @@ interface SectGameActions {
   
   // 行动建议
   getActionSuggestions: () => string[];
+  
+  // 关系管理
+  applyRelationshipChange: (change: RelationshipChange) => void;
 }
 
 // 初始状态
@@ -602,6 +606,13 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
             });
           }
           
+          // 应用关系变化
+          if (result.关系变化) {
+            result.关系变化.forEach(change => {
+              state.applyRelationshipChange(change);
+            });
+          }
+          
           // 播放音效和特效
           if (result.成功) {
             audioManager.playSound('success');
@@ -745,6 +756,56 @@ export const useSectStore = create<SectGameState & SectGameActions>()(
           NPC索引: state.NPC索引,
           世界名望榜: state.世界名望榜
         });
+      },
+      
+      // 应用关系变化
+      applyRelationshipChange: (change: RelationshipChange) => {
+        const state = get();
+        const npc = state.NPC索引[change.npcId];
+        
+        if (!npc) {
+          state.addLog(`❌ 未找到NPC：${change.npcId}`);
+          return;
+        }
+        
+        try {
+          let newRelationshipTree = npc.关系网;
+          
+          switch (change.action) {
+            case 'add':
+              newRelationshipTree = RelationshipUtils.addRelationship(
+                newRelationshipTree,
+                change.targetName,
+                change.relationshipType
+              );
+              state.addLog(`🤝 ${npc.姓名}与${change.targetName}建立了${change.relationshipType}关系`);
+              break;
+              
+            case 'remove':
+              newRelationshipTree = RelationshipUtils.removeRelationship(
+                newRelationshipTree,
+                change.targetName,
+                change.relationshipType
+              );
+              state.addLog(`💔 ${npc.姓名}与${change.targetName}的${change.relationshipType}关系破裂`);
+              break;
+              
+            case 'update':
+              // 更新关系强度（这里简化处理，实际可能需要更复杂的关系强度系统）
+              if (change.strengthChange > 0) {
+                state.addLog(`💚 ${npc.姓名}与${change.targetName}的${change.relationshipType}关系得到加强`);
+              } else if (change.strengthChange < 0) {
+                state.addLog(`💔 ${npc.姓名}与${change.targetName}的${change.relationshipType}关系有所疏远`);
+              }
+              break;
+          }
+          
+          // 更新NPC的关系网
+          state.updateNPC(change.npcId, { 关系网: newRelationshipTree });
+          
+        } catch (error) {
+          state.addLog(`❌ 更新关系失败：${error}`);
+        }
       }
     }),
     {
