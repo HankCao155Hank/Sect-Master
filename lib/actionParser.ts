@@ -1,8 +1,15 @@
 // 修仙宗门掌门游戏 - 行动解析器
 
 import { rng } from './rng';
-import { EventJudgmentRules } from './rules';
 import { Sect, NPC } from './generator';
+
+// 游戏状态接口
+interface GameState {
+  宗门: Sect;
+  NPC索引: Record<string, NPC>;
+  世界名望榜: { 势力: string; 名望: number }[];
+  秘境索引: unknown[];
+}
 
 // 行动结果接口
 export interface ActionResult {
@@ -24,12 +31,7 @@ export class ActionParser {
   // 解析并执行玩家行动
   static parseAndExecute(
     action: string,
-    gameState: {
-      宗门: Sect;
-      NPC索引: Record<string, NPC>;
-      世界名望榜: { 势力: string; 名望: number }[];
-      秘境索引: unknown[];
-    }
+    gameState: GameState
   ): ActionResult {
     const normalizedAction = action.toLowerCase().trim();
     
@@ -107,7 +109,7 @@ export class ActionParser {
   }
 
   // 执行建筑相关行动
-  private static executeBuildingAction(action: string, gameState: any): ActionResult {
+  private static executeBuildingAction(action: string, gameState: GameState): ActionResult {
     const { 宗门, NPC索引 } = gameState;
     const buildings = 宗门.建筑;
     const npcs = Object.values(NPC索引);
@@ -270,8 +272,8 @@ export class ActionParser {
   }
 
   // 执行世界探索行动
-  private static executeWorldAction(action: string, gameState: any): ActionResult {
-    const { 世界名望榜, 秘境索引, 宗门 } = gameState;
+  private static executeWorldAction(action: string, gameState: GameState): ActionResult {
+    const { 世界名望榜 } = gameState;
     
     if (action.includes('探索') || action.includes('游历')) {
       const success = rng.next() < 0.6;
@@ -325,7 +327,7 @@ export class ActionParser {
   }
 
   // 执行关系网行动
-  private static executeRelationshipAction(action: string, gameState: any): ActionResult {
+  private static executeRelationshipAction(action: string, gameState: GameState): ActionResult {
     const { NPC索引 } = gameState;
     const npcs = Object.values(NPC索引);
     
@@ -388,7 +390,7 @@ export class ActionParser {
   }
 
   // 执行修炼相关行动
-  private static executeCultivationAction(action: string, gameState: any): ActionResult {
+  private static executeCultivationAction(action: string, gameState: GameState): ActionResult {
     const { NPC索引 } = gameState;
     const npcs = Object.values(NPC索引);
     const npcName = npcs.length > 0 ? npcs[Math.floor(rng.next() * npcs.length)].姓名 : '掌门';
@@ -416,8 +418,8 @@ export class ActionParser {
   }
 
   // 执行宗门管理行动
-  private static executeSectManagementAction(action: string, gameState: any): ActionResult {
-    const { 宗门, NPC索引 } = gameState;
+  private static executeSectManagementAction(action: string, gameState: GameState): ActionResult {
+    const { NPC索引 } = gameState;
     const npcs = Object.values(NPC索引);
     const npcName = npcs.length > 0 ? npcs[Math.floor(rng.next() * npcs.length)].姓名 : '掌门';
     
@@ -456,7 +458,7 @@ export class ActionParser {
   }
 
   // 执行默认行动
-  private static executeDefaultAction(action: string, gameState: any): ActionResult {
+  private static executeDefaultAction(action: string, _gameState: GameState): ActionResult {
     const success = rng.next() < 0.5;
     return {
       成功: success,
