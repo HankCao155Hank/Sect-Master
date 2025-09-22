@@ -20,9 +20,9 @@ export class RelationshipUtils {
     
     const traverse = (node: RelationshipNode) => {
       if (node.children) {
-        node.children.forEach(child => {
+        node.children.forEach((child: RelationshipNode) => {
           if (child.children) {
-            child.children.forEach(grandChild => {
+            child.children.forEach((grandChild: RelationshipNode) => {
               names.push(grandChild.label);
             });
           }
@@ -40,9 +40,9 @@ export class RelationshipUtils {
     
     const traverse = (node: RelationshipNode) => {
       if (node.children) {
-        node.children.forEach(child => {
+        node.children.forEach((child: RelationshipNode) => {
           if (child.label === relationshipType && child.children) {
-            child.children.forEach(grandChild => {
+            child.children.forEach((grandChild: RelationshipNode) => {
               names.push(grandChild.label);
             });
           }
@@ -88,7 +88,7 @@ export class RelationshipUtils {
   }
 
   // 根据行动类型选择合适的NPC
-  static selectNPCForAction(npcs: NPC[], actionType: string): { npc: NPC; relatedName?: string } {
+  static selectNPCForAction(npcs: NPC[], actionType: string): { npc: NPC; relatedName: string } {
     if (npcs.length === 0) {
       // 创建一个默认的NPC对象
       const defaultNPC: NPC = {
@@ -100,7 +100,7 @@ export class RelationshipUtils {
         性格: ['温和', '友善'],
         境界: '引气入体',
         主修: '剑修',
-        灵根: { 等级: '下品', 属性: ['金'], 表达: '金灵根' },
+        灵根: { 等级: '五灵根', 属性: ['金'], 表达: '金灵根' },
         天赋: 50,
         tags: [],
         关系网: { label: '某位弟子', children: [] },
@@ -157,9 +157,9 @@ export class RelationshipUtils {
     
     const updateNode = (node: RelationshipNode) => {
       if (node.children) {
-        node.children.forEach(child => {
+        node.children.forEach((child: RelationshipNode) => {
           if (child.label === relationshipType && child.children) {
-            child.children.forEach(grandChild => {
+            child.children.forEach((grandChild: RelationshipNode) => {
               if (grandChild.label === targetName) {
                 // 这里可以添加关系强度更新逻辑
                 // 目前只是找到目标，实际的关系强度更新需要更复杂的数据结构
@@ -185,7 +185,7 @@ export class RelationshipUtils {
     const newTree = JSON.parse(JSON.stringify(relationshipTree)); // 深拷贝
     
     // 查找是否已存在该关系类型
-    let relationshipNode = newTree.children?.find(child => child.label === relationshipType);
+    let relationshipNode = newTree.children?.find((child: RelationshipNode) => child.label === relationshipType);
     
     if (!relationshipNode) {
       // 如果不存在该关系类型，创建新的
@@ -200,7 +200,7 @@ export class RelationshipUtils {
     }
     
     // 检查是否已存在该人名
-    const exists = relationshipNode.children?.some(child => child.label === targetName);
+    const exists = relationshipNode.children?.some((child: RelationshipNode) => child.label === targetName);
     if (!exists) {
       if (!relationshipNode.children) {
         relationshipNode.children = [];
@@ -222,9 +222,9 @@ export class RelationshipUtils {
     const newTree = JSON.parse(JSON.stringify(relationshipTree)); // 深拷贝
     
     if (newTree.children) {
-      newTree.children.forEach(child => {
+      newTree.children.forEach((child: RelationshipNode) => {
         if (child.label === relationshipType && child.children) {
-          child.children = child.children.filter(grandChild => grandChild.label !== targetName);
+          child.children = child.children.filter((grandChild: RelationshipNode) => grandChild.label !== targetName);
         }
       });
     }
