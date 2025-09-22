@@ -72,7 +72,7 @@ export class ActionParser {
     }
     
     // 默认行动
-    return this.executeDefaultAction(normalizedAction, gameState);
+    return this.executeDefaultAction(normalizedAction);
   }
 
   // 判断是否为建筑相关行动
